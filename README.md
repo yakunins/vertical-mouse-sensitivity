@@ -13,16 +13,12 @@ Useful when your mouse feels too slow vertically but horizontal is fine, or you 
 
 Edit `config.json` and restart the app.
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `multiplier` | `1.35` | Vertical sensitivity multiplier (e.g., `2` = 2x vertical speed) |
-| `toggleShortcut` | `"#!v"` | AHK hotkey to toggle on/off (`#!v` = Win+Alt+V) |
-| `disableForExe` | `[]` | Exe names to pause adjustment for (e.g., `["photoshop.exe"]`) |
-| `disableInGames` | `false` | Auto-disable for common games (CS2, Valorant, Fortnite, etc.) |
-| `trayIcon` | `"vertical"` | Tray icon theme (`vertical`, `bell`, `eye`, `shield`, `transparent`) |
-| `debug` | `false` | Write `debug.log` with rolling event log |
-| `logMaxLines` | `128` | Max lines kept in debug log |
-| `logSampleRate` | `10` | Log every Nth mouse adjustment (reduces noise) |
+| Setting          | Default | Description                                                     |
+| ---------------- | ------- | --------------------------------------------------------------- |
+| `multiplier`     | `1.35`  | Vertical sensitivity multiplier (e.g., `2` = 2x vertical speed) |
+| `toggleShortcut` | `"#!v"` | AHK hotkey to toggle on/off (`#!v` = Win+Alt+V)                 |
+| `disableForExe`  | `[]`    | Exe names to pause adjustment for (e.g., `["photoshop.exe"]`)   |
+| `disableInGames` | `false` | Auto-disable for common games (CS2, Valorant, Fortnite, etc.)   |
 
 ## Usage
 
@@ -36,7 +32,7 @@ Uses raw input (WM_INPUT) for sub-pixel precision at slow speeds.
 
 ## Uninstall
 
-Run `uninstall.cmd` to remove the startup shortcut. Delete the folder.
+Download [`uninstall.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/uninstall.cmd) into the app folder and run it to remove the startup shortcut. Delete the folder.
 
 ## License
 
