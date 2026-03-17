@@ -6,13 +6,8 @@ Useful when your mouse feels too slow vertically but horizontal is fine, or you 
 
 ## Install
 
-1. Install [AutoHotkey v2](https://www.autohotkey.com/)
-2. Clone or download this repo
-3. Run `vertical-sens.ahk`
-
-The app runs in the system tray.
-
-To start on boot, run `install.cmd` (creates a startup shortcut). Requires compiling first via `compile.cmd`.
+1. Download [`vertical-sens.exe`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/vertical-sens.exe), [`config.json`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/config.json), [`install.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/install.cmd), and [`uninstall.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/uninstall.cmd) into a separate folder (e.g. `C:\vertical-sens\`)
+2. Run `install.cmd` — creates a startup shortcut so the app launches on boot
 
 ## Configure
 
@@ -42,11 +37,6 @@ Uses raw input (WM_INPUT) for sub-pixel precision at slow speeds.
 ## Uninstall
 
 Run `uninstall.cmd` to remove the startup shortcut. Delete the folder.
-
-## Requirements
-
-- Windows 10/11
-- AutoHotkey v2.0+
 
 ## License
 
