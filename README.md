@@ -6,7 +6,7 @@ Useful when your mouse feels too slow vertically but horizontal is fine, or you 
 
 ## Install
 
-1. Download [`vertical-sens.exe`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/vertical-sens.exe), [`config.json`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/config.json), [`install.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/install.cmd), and [`uninstall.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/uninstall.cmd) into a separate folder (e.g. `C:\vertical-sens\`)
+1. Download [`vertical-sens.exe`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/vertical-sens.exe), [`config.json`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/config.json), and [`install.cmd`](https://github.com/yakunins/y-mouse-sens/releases/latest/download/install.cmd) into a separate folder (e.g. `C:\vertical-sens\`)
 2. Run `install.cmd` — creates a startup shortcut so the app launches on boot
 
 ## Configure
