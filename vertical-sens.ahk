@@ -10,11 +10,47 @@
 #include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.2"
+    static Version := "0.3"
 
     __New(cfg?) {
         defaultCfg := {
-            excludeApps: [],
+            disableForExe: [],
+            disableInGames: false,
+            gameExeList: [
+                "cs2.exe", "csgo.exe",
+                "dota2.exe",
+                "TslGame.exe", "PUBG-Win64-Shipping.exe",
+                "valorant.exe", "VALORANT-Win64-Shipping.exe",
+                "LeagueClient.exe", "leagueoflegends.exe", "League of Legends.exe",
+                "FortniteClient-Win64-Shipping.exe",
+                "r5apex.exe",
+                "GTA5.exe", "GTA6.exe", "FiveM.exe",
+                "RustClient.exe", "Rust.exe",
+                "eldenring.exe",
+                "bg3.exe", "baldursgate3.exe",
+                "RainbowSix.exe", "RainbowSixSiege.exe",
+                "Overwatch.exe",
+                "tf2.exe",
+                "MarvelRivals.exe",
+                "PathOfExile2.exe",
+                "MonsterHunterWilds.exe",
+                "aces.exe",
+                "FC25.exe",
+                "SlayTheSpire2.exe",
+                "deadlock.exe",
+                "Minecraft.Windows.exe", "Minecraft.exe", "javaw.exe",
+                "RobloxPlayerBeta.exe",
+                "Helldivers2.exe",
+                "Cyberpunk2077.exe",
+                "destiny2.exe",
+                "RocketLeague.exe",
+                "EscapeFromTarkov.exe",
+                "starfield.exe",
+                "callofduty.exe", "cod.exe",
+                "WorldOfTanks.exe",
+                "Diablo IV.exe",
+                "Stardew Valley.exe"
+            ],
             multiplier: 1.35,
             toggleShortcut: "#!v",
             trayIcon: "vertical",
@@ -26,6 +62,7 @@ class VerticalSens {
         userCfg := this.LoadConfig()
         this.cfg := userCfg ? MergeObjects(defaultCfg, userCfg) : defaultCfg
         this.enabled := true
+        this.active := true
         this.hook := 0
         this.injecting := false
         this.accumX := 0.0
@@ -34,6 +71,7 @@ class VerticalSens {
         this.curY := 0.0
         this.lastExe := ""
         this.rawToScreen := GetMouseSpeedFactor()
+        this.BuildExclusionList()
 
         this.log := FileDebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.logMaxLines, this.cfg.logSampleRate)
         this.rawInput := RawMouseInput(ObjBindMethod(this, "OnMouseDelta"))
@@ -96,6 +134,26 @@ class VerticalSens {
         Hotkey(this.cfg.toggleShortcut, ObjBindMethod(this, "Toggle"))
     }
 
+    BuildExclusionList() {
+        this.excludedExes := Map()
+
+        ; Add user-specified exe names
+        if this.cfg.disableForExe is Array {
+            for exe in this.cfg.disableForExe
+                this.excludedExes[StrLower(exe)] := true
+        }
+
+        ; Add game exe list if enabled
+        if this.cfg.disableInGames && this.cfg.gameExeList is Array {
+            for exe in this.cfg.gameExeList
+                this.excludedExes[StrLower(exe)] := true
+        }
+    }
+
+    IsExcludedExe(exe) {
+        return this.excludedExes.Has(StrLower(exe))
+    }
+
     SyncCursorPos() {
         ; Use GetCursorPos for physical screen coordinates (matches SetCursorPos)
         ; MouseGetPos defaults to window-relative coords which causes a jump
@@ -116,7 +174,7 @@ class VerticalSens {
     }
 
     OnMouseDelta(rawDX, rawDY) {
-        if !this.enabled
+        if !this.enabled || !this.active
             return
 
         ; Convert raw counts to screen pixels: X at 1:1, Y scaled by multiplier
@@ -167,15 +225,25 @@ class VerticalSens {
             return
         if (exe != this.lastExe) {
             this.lastExe := exe
-            this.log.Add("Foreground | " exe)
+            wasActive := this.active
+            this.active := !this.IsExcludedExe(exe)
+
+            if wasActive && !this.active {
+                this.log.Add("Foreground | " exe " (excluded, adjustment paused)")
+            } else if !wasActive && this.active {
+                this.SyncCursorPos()
+                this.log.Add("Foreground | " exe " (adjustment resumed)")
+            } else {
+                this.log.Add("Foreground | " exe)
+            }
         }
     }
 
     LowLevelMouseProc(nCode, wParam, lParam) {
         Critical
 
-        ; Block real WM_MOUSEMOVE when enabled (handled via raw input)
-        if (nCode >= 0 && wParam = 0x0200 && this.enabled && !this.injecting) {
+        ; Block real WM_MOUSEMOVE when enabled and active (handled via raw input)
+        if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active && !this.injecting) {
             flags := NumGet(lParam + 0, 12, "UInt")
             if !(flags & 1)
                 return 1

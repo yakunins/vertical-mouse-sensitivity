@@ -22,7 +22,8 @@ Edit `config.json` and restart the app.
 |---------|---------|-------------|
 | `multiplier` | `1.35` | Vertical sensitivity multiplier (e.g., `2` = 2x vertical speed) |
 | `toggleShortcut` | `"#!v"` | AHK hotkey to toggle on/off (`#!v` = Win+Alt+V) |
-| `excludeApps` | `[]` | Process names to skip (not yet implemented) |
+| `disableForExe` | `[]` | Exe names to pause adjustment for (e.g., `["photoshop.exe"]`) |
+| `disableInGames` | `false` | Auto-disable for common games (CS2, Valorant, Fortnite, etc.) |
 | `trayIcon` | `"vertical"` | Tray icon theme (`vertical`, `bell`, `eye`, `shield`, `transparent`) |
 | `debug` | `false` | Write `debug.log` with rolling event log |
 | `logMaxLines` | `128` | Max lines kept in debug log |
