@@ -4,52 +4,13 @@
 #include lib/Jsons.ahk
 #include lib/MergeObjects.ahk
 #include lib/UseBase64TrayIcon.ahk
-
-class DebugLog {
-    __New(enabled, filePath, maxLines := 128, sampleRate := 10) {
-        this.enabled := enabled
-        this.filePath := filePath
-        this.maxLines := maxLines
-        this.sampleRate := sampleRate
-        this.buffer := []
-        this.writeCount := 0
-        this.sampleCount := 0
-    }
-
-    Add(message, sampled := false) {
-        if !this.enabled
-            return
-
-        if sampled {
-            this.sampleCount++
-            if Mod(this.sampleCount, this.sampleRate) != 0
-                return
-        }
-
-        timestamp := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-        this.buffer.Push("[" timestamp "] " message)
-
-        while this.buffer.Length > this.maxLines
-            this.buffer.RemoveAt(1)
-
-        this.writeCount++
-        if this.writeCount >= 50
-            this.Flush()
-    }
-
-    Flush() {
-        if !this.enabled || !this.buffer.Length
-            return
-        text := ""
-        for line in this.buffer
-            text .= line "`n"
-        try FileOpen(this.filePath, "w", "UTF-8").Write(text)
-        this.writeCount := 0
-    }
-}
+#include lib/FileDebugLog.ahk
+#include lib/MouseSpeed.ahk
+#include lib/RawMouseInput.ahk
+#include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.1"
+    static Version := "0.2"
 
     __New(cfg?) {
         defaultCfg := {
@@ -65,13 +26,17 @@ class VerticalSens {
         userCfg := this.LoadConfig()
         this.cfg := userCfg ? MergeObjects(defaultCfg, userCfg) : defaultCfg
         this.enabled := true
-        this.hHook := 0
-        this.lastY := 0
+        this.hook := 0
         this.injecting := false
+        this.accumX := 0.0
         this.accumY := 0.0
+        this.curX := 0.0
+        this.curY := 0.0
         this.lastExe := ""
+        this.rawToScreen := GetMouseSpeedFactor()
 
-        this.log := DebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.logMaxLines, this.cfg.logSampleRate)
+        this.log := FileDebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.logMaxLines, this.cfg.logSampleRate)
+        this.rawInput := RawMouseInput(ObjBindMethod(this, "OnMouseDelta"))
     }
 
     LoadConfig() {
@@ -87,10 +52,19 @@ class VerticalSens {
     }
 
     Run() {
-        this.log.Add("App started | multiplier=" this.cfg.multiplier " debug=" this.cfg.debug)
+        this.log.Add("App started | multiplier=" this.cfg.multiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
         this.SetupTray()
         this.BindHotkey()
-        this.InstallHook()
+        this.SyncCursorPos()
+
+        this.rawInput.Register()
+        this.log.Add("Raw input registered")
+
+        this.hook := MouseHookInstall(ObjBindMethod(this, "LowLevelMouseProc"))
+        this.log.Add("Mouse hook installed")
+
+        this.StartForegroundTracker()
+        OnExit(ObjBindMethod(this, "OnAppExit"))
     }
 
     SetupTray() {
@@ -101,8 +75,9 @@ class VerticalSens {
         tray.Delete()
         tray.Add("Toggle ON/OFF`t" this.HotkeyDisplay(), ObjBindMethod(this, "Toggle"))
         tray.Add()
-        tray.Add("Multiplier: " this.cfg.multiplier "x", (*) => 0)
-        tray.Disable("Multiplier: " this.cfg.multiplier "x")
+        mult := Round(this.cfg.multiplier, 2)
+        tray.Add("Multiplier: " mult "x", (*) => 0)
+        tray.Disable("Multiplier: " mult "x")
         tray.Add()
         tray.Add("Exit", (*) => ExitApp())
         tray.Default := "Toggle ON/OFF`t" this.HotkeyDisplay()
@@ -121,37 +96,63 @@ class VerticalSens {
         Hotkey(this.cfg.toggleShortcut, ObjBindMethod(this, "Toggle"))
     }
 
+    SyncCursorPos() {
+        ; Use GetCursorPos for physical screen coordinates (matches SetCursorPos)
+        ; MouseGetPos defaults to window-relative coords which causes a jump
+        pt := Buffer(8)
+        DllCall("GetCursorPos", "Ptr", pt)
+        this.curX := NumGet(pt, 0, "Int") + 0.0
+        this.curY := NumGet(pt, 4, "Int") + 0.0
+        this.accumX := 0.0
+        this.accumY := 0.0
+    }
+
     Toggle(*) {
         this.enabled := !this.enabled
-        this.accumY := 0.0
+        if this.enabled
+            this.SyncCursorPos()
         this.UpdateTooltip()
         this.log.Add("Toggled " (this.enabled ? "ON" : "OFF"))
     }
 
-    InstallHook() {
-        this.hookCallback := CallbackCreate(ObjBindMethod(this, "LowLevelMouseProc"), , 3)
+    OnMouseDelta(rawDX, rawDY) {
+        if !this.enabled
+            return
 
-        ; WH_MOUSE_LL = 14
-        this.hHook := DllCall("SetWindowsHookEx"
-            , "Int", 14
-            , "Ptr", this.hookCallback
-            , "Ptr", 0
-            , "UInt", 0
-            , "Ptr")
+        ; Convert raw counts to screen pixels: X at 1:1, Y scaled by multiplier
+        this.accumX += rawDX * this.rawToScreen
+        this.accumY += rawDY * this.rawToScreen * this.cfg.multiplier
 
-        if !this.hHook {
-            this.log.Add("Hook install failed")
-            this.log.Flush()
-            throw Error("Failed to install mouse hook")
-        }
+        ; Extract whole pixels to emit
+        moveX := Integer(this.accumX)
+        moveY := Integer(this.accumY)
 
-        this.log.Add("Mouse hook installed")
-        this.StartForegroundTracker()
-        OnExit(ObjBindMethod(this, "OnAppExit"))
+        if moveX = 0 && moveY = 0
+            return
+
+        this.accumX -= moveX
+        this.accumY -= moveY
+        this.curX += moveX
+        this.curY += moveY
+
+        ; Clamp to virtual screen bounds
+        left := SysGet(76)
+        top := SysGet(77)
+        right := left + SysGet(78) - 1
+        bottom := top + SysGet(79) - 1
+        this.curX := Max(left + 0.0, Min(this.curX, right + 0.0))
+        this.curY := Max(top + 0.0, Min(this.curY, bottom + 0.0))
+
+        this.injecting := true
+        DllCall("user32\SetCursorPos", "Int", Round(this.curX), "Int", Round(this.curY))
+        this.injecting := false
+
+        this.log.Add("Raw | rdx=" rawDX " rdy=" rawDY " mx=" moveX " my=" moveY, true)
     }
 
     OnAppExit(*) {
-        this.RemoveHook()
+        if this.hook
+            MouseHookRemove(this.hook)
         this.log.Add("App exited")
         this.log.Flush()
     }
@@ -170,57 +171,22 @@ class VerticalSens {
         }
     }
 
-    RemoveHook() {
-        if this.hHook {
-            DllCall("UnhookWindowsHookEx", "Ptr", this.hHook)
-            this.hHook := 0
-        }
-        if this.hookCallback {
-            CallbackFree(this.hookCallback)
-            this.hookCallback := 0
-        }
-    }
-
     LowLevelMouseProc(nCode, wParam, lParam) {
         Critical
 
-        ; WM_MOUSEMOVE = 0x0200
+        ; Block real WM_MOUSEMOVE when enabled (handled via raw input)
         if (nCode >= 0 && wParam = 0x0200 && this.enabled && !this.injecting) {
             flags := NumGet(lParam + 0, 12, "UInt")
-
-            ; Skip events generated by our SetCursorPos
-            if !(flags & 1) {
-                currentX := NumGet(lParam + 0, 0, "Int")
-                currentY := NumGet(lParam + 0, 4, "Int")
-
-                if this.lastY {
-                    deltaY := currentY - this.lastY
-                    if deltaY != 0 {
-                        ; Accumulate fractional to prevent rounding loss
-                        this.accumY += deltaY * (this.cfg.multiplier - 1)
-                        inject := Integer(this.accumY)
-
-                        if inject != 0 {
-                            this.accumY -= inject
-                            newY := currentY + inject
-
-                            ; Block original event and set cursor to adjusted position
-                            this.injecting := true
-                            DllCall("user32\SetCursorPos", "Int", currentX, "Int", newY)
-                            this.injecting := false
-
-                            this.lastY := newY
-                            this.log.Add("Adjusted | dy=" deltaY " inject=" inject " y=" currentY "->" newY, true)
-                            return 1
-                        }
-                    }
-                }
-
-                this.lastY := currentY
+            if !(flags & 1)
+                return 1
+            ; Injected by another app — sync our tracked position
+            if !this.injecting {
+                this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
+                this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
             }
         }
 
-        return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UPtr", wParam, "Ptr", lParam, "Ptr")
+        return MouseHookCallNext(nCode, wParam, lParam)
     }
 }
 

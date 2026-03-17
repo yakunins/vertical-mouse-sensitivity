@@ -1,9 +1,9 @@
 {
     "excludeApps": [],
-    "multiplier": 1.5,
+    "multiplier": 1.4,
     "toggleShortcut": "#!v",
     "trayIcon": "vertical",
-    "debug": true,
+    "debug": false,
     "logMaxLines": 128,
     "logSampleRate": 10
 }
