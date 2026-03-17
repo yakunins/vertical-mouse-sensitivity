@@ -10,7 +10,7 @@
 #include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.3"
+    static Version := "0.4"
 
     __New(cfg?) {
         defaultCfg := {
@@ -54,9 +54,10 @@ class VerticalSens {
             multiplier: 1.35,
             toggleShortcut: "#!v",
             trayIcon: "vertical",
+            disableOnDrag: true,
             debug: false,
-            logMaxLines: 128,
-            logSampleRate: 10
+            debugLogMaxLines: 128,
+            debugLogSampleRate: 10
         }
 
         userCfg := this.LoadConfig()
@@ -73,7 +74,7 @@ class VerticalSens {
         this.rawToScreen := GetMouseSpeedFactor()
         this.BuildExclusionList()
 
-        this.log := FileDebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.logMaxLines, this.cfg.logSampleRate)
+        this.log := FileDebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.debugLogMaxLines, this.cfg.debugLogSampleRate)
         this.rawInput := RawMouseInput(ObjBindMethod(this, "OnMouseDelta"))
     }
 
@@ -154,6 +155,10 @@ class VerticalSens {
         return this.excludedExes.Has(StrLower(exe))
     }
 
+    IsDragging() {
+        return GetKeyState("LButton", "P") || GetKeyState("RButton", "P") || GetKeyState("MButton", "P")
+    }
+
     SyncCursorPos() {
         ; Use GetCursorPos for physical screen coordinates (matches SetCursorPos)
         ; MouseGetPos defaults to window-relative coords which causes a jump
@@ -176,6 +181,12 @@ class VerticalSens {
     OnMouseDelta(rawDX, rawDY) {
         if !this.enabled || !this.active
             return
+
+        ; During drag (mouse button held), let native movement handle it
+        if this.cfg.disableOnDrag && this.IsDragging() {
+            this.SyncCursorPos()
+            return
+        }
 
         ; Convert raw counts to screen pixels: X at 1:1, Y scaled by multiplier
         this.accumX += rawDX * this.rawToScreen
@@ -245,8 +256,12 @@ class VerticalSens {
         ; Block real WM_MOUSEMOVE when enabled and active (handled via raw input)
         if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active && !this.injecting) {
             flags := NumGet(lParam + 0, 12, "UInt")
-            if !(flags & 1)
+            if !(flags & 1) {
+                ; Allow native mouse movement during drag for drawing/painting apps
+                if this.cfg.disableOnDrag && this.IsDragging()
+                    return MouseHookCallNext(nCode, wParam, lParam)
                 return 1
+            }
             ; Injected by another app — sync our tracked position
             if !this.injecting {
                 this.curX := NumGet(lParam + 0, 0, "Int") + 0.0

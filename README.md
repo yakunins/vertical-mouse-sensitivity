@@ -19,6 +19,7 @@ Edit `config.json` and restart the app.
 | `toggleShortcut` | `"#!v"` | AHK hotkey to toggle on/off (`#!v` = Win+Alt+V)                 |
 | `disableForExe`  | `[]`    | Exe names to pause adjustment for (e.g., `["photoshop.exe"]`)   |
 | `disableInGames` | `false` | Auto-disable for common games (CS2, Valorant, Fortnite, etc.)   |
+| `disableOnDrag`  | `true`  | Disable adjustment while a mouse button is held (fixes drawing in Snipping Tool, Paint, etc.) |
 
 ## Usage
 
