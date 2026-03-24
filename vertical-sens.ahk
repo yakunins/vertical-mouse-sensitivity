@@ -91,7 +91,8 @@ class VerticalSens {
     }
 
     Run() {
-        this.log.Add("App started | multiplier=" this.cfg.multiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
+        ProcessSetPriority("High")
+        this.log.Add("App started | priority=High | multiplier=" this.cfg.multiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
         this.SetupTray()
         this.BindHotkey()
         this.SyncCursorPos()
@@ -179,44 +180,9 @@ class VerticalSens {
     }
 
     OnMouseDelta(rawDX, rawDY) {
-        if !this.enabled || !this.active
-            return
-
-        ; During drag (mouse button held), let native movement handle it
-        if this.cfg.disableOnDrag && this.IsDragging() {
-            this.SyncCursorPos()
-            return
-        }
-
-        ; Convert raw counts to screen pixels: X at 1:1, Y scaled by multiplier
-        this.accumX += rawDX * this.rawToScreen
-        this.accumY += rawDY * this.rawToScreen * this.cfg.multiplier
-
-        ; Extract whole pixels to emit
-        moveX := Integer(this.accumX)
-        moveY := Integer(this.accumY)
-
-        if moveX = 0 && moveY = 0
-            return
-
-        this.accumX -= moveX
-        this.accumY -= moveY
-        this.curX += moveX
-        this.curY += moveY
-
-        ; Clamp to virtual screen bounds
-        left := SysGet(76)
-        top := SysGet(77)
-        right := left + SysGet(78) - 1
-        bottom := top + SysGet(79) - 1
-        this.curX := Max(left + 0.0, Min(this.curX, right + 0.0))
-        this.curY := Max(top + 0.0, Min(this.curY, bottom + 0.0))
-
-        this.injecting := true
-        DllCall("user32\SetCursorPos", "Int", Round(this.curX), "Int", Round(this.curY))
-        this.injecting := false
-
-        this.log.Add("Raw | rdx=" rawDX " rdy=" rawDY " mx=" moveX " my=" moveY, true)
+        ; Movement is now handled directly in the hook callback
+        ; Raw input kept only for debug logging
+        this.log.Add("Raw | rdx=" rawDX " rdy=" rawDY, true)
     }
 
     OnAppExit(*) {
@@ -253,13 +219,41 @@ class VerticalSens {
     LowLevelMouseProc(nCode, wParam, lParam) {
         Critical
 
-        ; Block real WM_MOUSEMOVE when enabled and active (handled via raw input)
         if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active && !this.injecting) {
             flags := NumGet(lParam + 0, 12, "UInt")
             if !(flags & 1) {
                 ; Allow native mouse movement during drag for drawing/painting apps
                 if this.cfg.disableOnDrag && this.IsDragging()
                     return MouseHookCallNext(nCode, wParam, lParam)
+
+                ; Get target position (where Windows wants to move cursor)
+                targetX := NumGet(lParam + 0, 0, "Int")
+                targetY := NumGet(lParam + 0, 4, "Int")
+
+                ; Compute delta from our tracked position
+                deltaY := targetY - this.curY
+
+                ; Scale Y delta, accumulate fractions for sub-pixel precision
+                this.accumY += deltaY * this.cfg.multiplier
+                moveY := Integer(this.accumY)
+                this.accumY -= moveY
+
+                ; Update tracked position (X moves normally, Y scaled)
+                this.curX := targetX + 0.0
+                this.curY := this.curY + moveY
+
+                ; Clamp to virtual screen bounds
+                left := SysGet(76)
+                top := SysGet(77)
+                right := left + SysGet(78) - 1
+                bottom := top + SysGet(79) - 1
+                this.curX := Max(left + 0.0, Min(this.curX, right + 0.0))
+                this.curY := Max(top + 0.0, Min(this.curY, bottom + 0.0))
+
+                this.injecting := true
+                DllCall("user32\SetCursorPos", "Int", Round(this.curX), "Int", Round(this.curY))
+                this.injecting := false
+
                 return 1
             }
             ; Injected by another app — sync our tracked position
