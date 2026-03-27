@@ -51,7 +51,7 @@ class VerticalSens {
                 "Diablo IV.exe",
                 "Stardew Valley.exe"
             ],
-            multiplier: 1.35,
+            yMultiplier: 1.35,
             toggleShortcut: "#!v",
             trayIcon: "vertical",
             disableOnDrag: true,
@@ -91,7 +91,7 @@ class VerticalSens {
 
     Run() {
         ProcessSetPriority("High")
-        this.log.Add("App started | priority=High | multiplier=" this.cfg.multiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
+        this.log.Add("App started | priority=High | multiplier=" this.cfg.yMultiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
         this.SetupTray()
         this.BindHotkey()
         this.SyncCursorPos()
@@ -114,7 +114,7 @@ class VerticalSens {
         tray.Delete()
         tray.Add("Toggle ON/OFF`t" this.HotkeyDisplay(), ObjBindMethod(this, "Toggle"))
         tray.Add()
-        mult := Round(this.cfg.multiplier, 2)
+        mult := Round(this.cfg.yMultiplier, 2)
         tray.Add("Multiplier: " mult "x", (*) => 0)
         tray.Disable("Multiplier: " mult "x")
         tray.Add()
@@ -238,7 +238,7 @@ class VerticalSens {
                 deltaY := targetY - this.curY
 
                 ; Scale Y delta, accumulate fractions for sub-pixel precision
-                this.accumY += deltaY * this.cfg.multiplier
+                this.accumY += deltaY * this.cfg.yMultiplier
                 moveY := Integer(this.accumY)
                 this.accumY -= moveY
 
