@@ -1,9 +1,10 @@
 {
+    "multiplier": 1.4,
     "disableForExe": [],
     "disableInGames": false,
-    "multiplier": 1.4,
     "toggleShortcut": "#!v",
     "trayIcon": "vertical",
+    "disableOnDrag": true,
     "debug": false,
     "logMaxLines": 128,
     "logSampleRate": 10,

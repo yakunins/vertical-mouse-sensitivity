@@ -65,7 +65,6 @@ class VerticalSens {
         this.enabled := true
         this.active := true
         this.hook := 0
-        this.injecting := false
         this.accumX := 0.0
         this.accumY := 0.0
         this.curX := 0.0
@@ -219,12 +218,17 @@ class VerticalSens {
     LowLevelMouseProc(nCode, wParam, lParam) {
         Critical
 
-        if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active && !this.injecting) {
+        if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active) {
             flags := NumGet(lParam + 0, 12, "UInt")
             if !(flags & 1) {
                 ; Allow native mouse movement during drag for drawing/painting apps
-                if this.cfg.disableOnDrag && this.IsDragging()
+                if this.cfg.disableOnDrag && this.IsDragging() {
+                    ; Sync tracked position so there's no jump when drag ends
+                    this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
+                    this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
+                    this.accumY := 0.0
                     return MouseHookCallNext(nCode, wParam, lParam)
+                }
 
                 ; Get target position (where Windows wants to move cursor)
                 targetX := NumGet(lParam + 0, 0, "Int")
@@ -250,17 +254,22 @@ class VerticalSens {
                 this.curX := Max(left + 0.0, Min(this.curX, right + 0.0))
                 this.curY := Max(top + 0.0, Min(this.curY, bottom + 0.0))
 
-                this.injecting := true
-                DllCall("user32\SetCursorPos", "Int", Round(this.curX), "Int", Round(this.curY))
-                this.injecting := false
+                ; If scaled position matches target, no Y adjustment needed
+                ; Let the message flow through so apps get WM_MOUSEMOVE (hover, cursor, etc.)
+                finalX := Round(this.curX)
+                finalY := Round(this.curY)
+                if (finalX = targetX && finalY = targetY)
+                    return MouseHookCallNext(nCode, wParam, lParam)
 
+                ; Move cursor to scaled position, swallow original message
+                ; SetCursorPos generates an echo WM_MOUSEMOVE which will pass through
+                ; on next hook call (delta=0 → matches target → CallNextHookEx above)
+                DllCall("user32\SetCursorPos", "Int", finalX, "Int", finalY)
                 return 1
             }
             ; Injected by another app — sync our tracked position
-            if !this.injecting {
-                this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
-                this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
-            }
+            this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
+            this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
         }
 
         return MouseHookCallNext(nCode, wParam, lParam)
