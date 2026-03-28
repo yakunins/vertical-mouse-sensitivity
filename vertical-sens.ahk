@@ -10,7 +10,7 @@
 #include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.5"
+    static Version := "0.7"
 
     __New(cfg?) {
         defaultCfg := {
@@ -65,9 +65,10 @@ class VerticalSens {
         this.enabled := true
         this.active := true
         this.hook := 0
+        this.menuOpen := false
         this.lastToggleLabel := ""
         this.lastMultLabel := ""
-        this.accumX := 0.0
+
         this.accumY := 0.0
         this.curX := 0.0
         this.curY := 0.0
@@ -121,7 +122,19 @@ class VerticalSens {
         tray.Add()
         tray.Add("Exit", (*) => ExitApp())
         this.UpdateTrayIcon()
-        OnMessage(0x0404, (wP, lP, *) => (lP = 0x0202 || lP = 0x0205) ? A_TrayMenu.Show() : 0)
+        OnMessage(0x0404, TrayClickHandler)
+        TrayClickHandler(wP, lP, *) {
+            if (lP = 0x0202 || lP = 0x0205) {  ; WM_LBUTTONUP or WM_RBUTTONUP
+                app.menuOpen := true
+                SetTimer(ShowTrayMenu, -1)
+                return 1
+            }
+        }
+        ShowTrayMenu() {
+            A_TrayMenu.Show()  ; Blocks until menu closes
+            app.menuOpen := false
+            app.SyncCursorPos()
+        }
     }
 
     MultiplierMenuLabel() {
@@ -201,8 +214,7 @@ class VerticalSens {
     }
 
     UpdateTooltip() {
-        state := this.enabled ? "ON" : "OFF"
-        A_IconTip := "Vertical Sensitivity v" . VerticalSens.Version . " [" . state . "]"
+        A_IconTip := "Vertical Sensitivity v" . VerticalSens.Version
     }
 
     BindHotkey() {
@@ -240,7 +252,7 @@ class VerticalSens {
         DllCall("GetCursorPos", "Ptr", pt)
         this.curX := NumGet(pt, 0, "Int") + 0.0
         this.curY := NumGet(pt, 4, "Int") + 0.0
-        this.accumX := 0.0
+
         this.accumY := 0.0
     }
 
@@ -311,7 +323,7 @@ class VerticalSens {
     LowLevelMouseProc(nCode, wParam, lParam) {
         Critical
 
-        if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active) {
+        if (nCode >= 0 && wParam = 0x0200 && this.enabled && this.active && !this.menuOpen) {
             flags := NumGet(lParam + 0, 12, "UInt")
             if !(flags & 1) {
                 ; Allow native mouse movement during drag for drawing/painting apps
