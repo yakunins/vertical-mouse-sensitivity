@@ -10,7 +10,7 @@
 #include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.4"
+    static Version := "0.5"
 
     __New(cfg?) {
         defaultCfg := {
@@ -65,6 +65,8 @@ class VerticalSens {
         this.enabled := true
         this.active := true
         this.hook := 0
+        this.lastToggleLabel := ""
+        this.lastMultLabel := ""
         this.accumX := 0.0
         this.accumY := 0.0
         this.curX := 0.0
@@ -107,19 +109,91 @@ class VerticalSens {
     }
 
     SetupTray() {
-        UseBase64TrayIcon(this.cfg.trayIcon, this.cfg.debug)
         this.UpdateTooltip()
 
         tray := A_TrayMenu
         tray.Delete()
-        tray.Add("Toggle ON/OFF`t" this.HotkeyDisplay(), ObjBindMethod(this, "Toggle"))
+        this.lastToggleLabel := this.ToggleMenuLabel()
+        tray.Add(this.lastToggleLabel, ObjBindMethod(this, "Toggle"))
         tray.Add()
-        mult := Round(this.cfg.yMultiplier, 2)
-        tray.Add("Multiplier: " mult "x", (*) => 0)
-        tray.Disable("Multiplier: " mult "x")
+        this.lastMultLabel := this.MultiplierMenuLabel()
+        tray.Add(this.lastMultLabel, ObjBindMethod(this, "ChangeMultiplier"))
         tray.Add()
         tray.Add("Exit", (*) => ExitApp())
-        tray.Default := "Toggle ON/OFF`t" this.HotkeyDisplay()
+        this.UpdateTrayIcon()
+        OnMessage(0x0404, (wP, lP, *) => (lP = 0x0202 || lP = 0x0205) ? A_TrayMenu.Show() : 0)
+    }
+
+    MultiplierMenuLabel() {
+        return "Y Multiplier: " Round(this.cfg.yMultiplier, 2) "x"
+    }
+
+    UpdateMultiplierMenu() {
+        tray := A_TrayMenu
+        newLabel := this.MultiplierMenuLabel()
+        tray.Rename(this.lastMultLabel, newLabel)
+        this.lastMultLabel := newLabel
+    }
+
+    ChangeMultiplier(*) {
+        originalVal := this.cfg.yMultiplier
+        activeVal := originalVal
+
+        g := Gui("+AlwaysOnTop", "Y Multiplier")
+        g.SetFont("s10")
+        g.Add("Text", , "Y multiplier (0.1 – 20):")
+        edit := g.Add("Edit", "w280 vMultVal", Round(originalVal, 2))
+        btnTest := g.Add("Button", "w280 Disabled Default", "Test (Enter)")
+        btnApply := g.Add("Button", "w280 Disabled", "Apply and save to config.json")
+        btnCancel := g.Add("Button", "w280", "Cancel")
+
+        validateInput := (*) => this.ValidateMultiplier(edit.Value)
+
+        edit.OnEvent("Change", (*) => (
+            btnTest.Enabled := validateInput() && Number(edit.Value) != activeVal,
+            btnApply.Enabled := validateInput() && Number(edit.Value) != originalVal
+        ))
+
+        btnTest.OnEvent("Click", (*) => (
+            activeVal := Number(edit.Value),
+            this.cfg.yMultiplier := activeVal,
+            this.UpdateMultiplierMenu(),
+            btnTest.Enabled := false,
+            btnApply.Enabled := activeVal != originalVal
+        ))
+
+        btnApply.OnEvent("Click", (*) => (
+            this.cfg.yMultiplier := Number(edit.Value),
+            this.UpdateMultiplierMenu(),
+            this.SaveMultiplier(Number(edit.Value)),
+            g.Destroy()
+        ))
+
+        cancelAction := (*) => (
+            this.cfg.yMultiplier := originalVal,
+            this.UpdateMultiplierMenu(),
+            g.Destroy()
+        )
+        btnCancel.OnEvent("Click", cancelAction)
+        g.OnEvent("Close", cancelAction)
+
+        g.Show()
+    }
+
+    ValidateMultiplier(str) {
+        val := 0
+        try val := Number(str)
+        return val >= 0.1 && val <= 20
+    }
+
+    SaveMultiplier(val) {
+        configPath := A_ScriptDir "\config.json"
+        try {
+            jsonStr := FileRead(configPath, "UTF-8")
+            jsonStr := RegExReplace(jsonStr, '("yMultiplier"\s*:\s*)[\d.]+', "${1}" Round(val, 2))
+            FileDelete(configPath)
+            FileAppend(jsonStr, configPath, "UTF-8")
+        }
     }
 
     HotkeyDisplay() {
@@ -170,10 +244,29 @@ class VerticalSens {
         this.accumY := 0.0
     }
 
+    ToggleMenuLabel() {
+        action := this.enabled ? "Turn Off" : "Turn On"
+        return action "`t" this.HotkeyDisplay()
+    }
+
+    UpdateTrayIcon() {
+        icon := this.enabled ? "vertical" : "vertical_off"
+        UseBase64TrayIcon(icon, this.cfg.debug)
+    }
+
+    UpdateToggleMenu() {
+        tray := A_TrayMenu
+        newLabel := this.ToggleMenuLabel()
+        tray.Rename(this.lastToggleLabel, newLabel)
+        this.lastToggleLabel := newLabel
+    }
+
     Toggle(*) {
         this.enabled := !this.enabled
         if this.enabled
             this.SyncCursorPos()
+        this.UpdateTrayIcon()
+        this.UpdateToggleMenu()
         this.UpdateTooltip()
         this.log.Add("Toggled " (this.enabled ? "ON" : "OFF"))
     }
