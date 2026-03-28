@@ -1,8 +1,9 @@
 # Vertical Mouse Sensitivity
 
-Adjust vertical (Y-axis) mouse sensitivity independently from horizontal on Windows.  
-When enabled, vertical mouse movement is scaled by `yMultiplier`. Horizontal movement is unchanged.  
-Uses raw input (WM_INPUT) for sub-pixel precision at slow speeds.  
+Adjust vertical (Y-axis) mouse sensitivity independently from horizontal movement on Windows.  
+When enabled, vertical movement is scaled by `yMultiplier`, while horizontal movement remains unchanged.
+
+Uses raw input (`WM_INPUT`) for sub-pixel precision at slow speeds.  
 Built with AutoHotkey v2.  
 
 ## Install
@@ -13,8 +14,8 @@ Built with AutoHotkey v2.
 
 ## Usage
 
-- **Win+Alt+V** toggles adjustment on/off
-- **System tray icon** shows current state; click for menu
+- **`Win+Alt+V`** toggle on/off
+- **System tray icon** shows current state; click to open the menu
 - **Y Multiplier** can be changed via tray menu with test/apply/save
 
 ## Configure
