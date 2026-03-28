@@ -1,0 +1,4 @@
+vertical-sens.exe
+config.json
+install.cmd
+uninstall.cmd
