@@ -1,8 +1,9 @@
 # Vertical Mouse Sensitivity
 
-Adjust vertical (Y-axis) mouse sensitivity independently from horizontal on Windows. Built with AutoHotkey v2.
-
-Useful when your mouse feels too slow vertically but horizontal is fine, or you want different vertical speed without changing your DPI.
+Adjust vertical (Y-axis) mouse sensitivity independently from horizontal on Windows.  
+When enabled, vertical mouse movement is scaled by `yMultiplier`. Horizontal movement is unchanged.  
+Uses raw input (WM_INPUT) for sub-pixel precision at slow speeds.  
+Built with AutoHotkey v2.  
 
 ## Install
 
@@ -28,14 +29,8 @@ Edit `config.json` and restart the app, or change Y Multiplier via tray menu.
 - **System tray icon** shows current state; click for menu
 - **Y Multiplier** can be changed via tray menu with test/apply/save
 
-When enabled, vertical mouse movement is scaled by `yMultiplier`. Horizontal movement is unchanged.
-
-Uses raw input (WM_INPUT) for sub-pixel precision at slow speeds.
-
-## Uninstall
-
-Run `uninstall.cmd` from the app folder to remove the startup shortcut. Delete the folder.
-
 ## License
-
 MIT
+
+Enjoy!  
+A donut, [maybe](https://www.paypal.com/donate/?business=KXM47EKBXFV4S&no_recurring=0&item_name=funding+of+github.com%2Fyakunins&currency_code=USD)? 🍩
