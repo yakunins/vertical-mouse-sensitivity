@@ -11,6 +11,12 @@ Built with AutoHotkey v2.
 2. Extract into a permanent folder (e.g. `C:\vertical-sens\`)
 3. Run `install.cmd` — creates a startup shortcut so the app launches on boot
 
+## Usage
+
+- **Win+Alt+V** toggles adjustment on/off
+- **System tray icon** shows current state; click for menu
+- **Y Multiplier** can be changed via tray menu with test/apply/save
+
 ## Configure
 
 Edit `config.json` and restart the app, or change Y Multiplier via tray menu.
@@ -22,12 +28,6 @@ Edit `config.json` and restart the app, or change Y Multiplier via tray menu.
 | `disableForExe`  | `[]`    | Exe names to pause adjustment for (e.g., `["photoshop.exe"]`)   |
 | `disableInGames` | `false` | Auto-disable for common games (CS2, Valorant, Fortnite, etc.)   |
 | `disableOnDrag`  | `true`  | Disable adjustment while a mouse button is held (fixes drawing in Snipping Tool, Paint, etc.) |
-
-## Usage
-
-- **Win+Alt+V** toggles adjustment on/off
-- **System tray icon** shows current state; click for menu
-- **Y Multiplier** can be changed via tray menu with test/apply/save
 
 ## License
 MIT
