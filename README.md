@@ -2,10 +2,12 @@
 
 <img src="images/splash.png" width="654" alt="vertical mouse sensitivity for windows" />
 
-Adjust vertical (Y-axis) mouse sensitivity independently from horizontal movement on Windows.  
+Adjust vertical (Y-axis) mouse sensitivity independently from horizontal movement on Windows.
+
 When enabled, vertical movement is scaled by `yMultiplier`, while horizontal movement remains unchanged.
-Uses raw input (`WM_INPUT`) for sub-pixel precision at slow speeds.  
-Built with AutoHotkey v2. 
+Uses raw input (`WM_INPUT`) for sub-pixel precision at slow speeds.
+
+Built with [AutoHotkey v2](https://www.autohotkey.com/v2/). Executable compiled with [Ahk2Exe](https://github.com/AutoHotkey/Ahk2Exe).
 
 ## Install
 
