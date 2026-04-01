@@ -1,6 +1,6 @@
 # Vertical Mouse Sensitivity
 
-<img src="images/splash.png" width="654" alt="vertical mouse sensitivity for windows" />
+<img src="images/splash.png" width="643" alt="vertical mouse sensitivity for windows" />
 
 Adjust vertical (Y-axis) mouse sensitivity independently from horizontal movement on Windows.
 
