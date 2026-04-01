@@ -14,12 +14,12 @@ class TrayMenu {
 
         tray := A_TrayMenu
         tray.Delete()
-        this.lastToggleLabel := this.ToggleMenuLabel()
-        tray.Add(this.lastToggleLabel, ObjBindMethod(this.app, "Toggle"))
-        tray.Add()
         this.lastMultLabel := this.app.mult.MenuLabel()
         tray.Add(this.lastMultLabel, ObjBindMethod(this.app.mult, "Show"))
-        tray.Add()
+        tray.Add() ; divider
+        this.lastToggleLabel := this.ToggleMenuLabel()
+        tray.Add(this.lastToggleLabel, ObjBindMethod(this.app, "Toggle"))
+        tray.Add() ; divider
         tray.Add(this.labels.exit, (*) => ExitApp())
         this.UpdateIcon()
 
@@ -44,7 +44,7 @@ class TrayMenu {
     }
 
     UpdateTooltip() {
-        A_IconTip := this.labels.tooltipPrefix . VerticalSens.Version
+        A_IconTip := this.labels.tooltipPrefix . VerticalSens.Version . "`n×" . Round(this.app.cfg.yMultiplier, 2)
     }
 
     ToggleMenuLabel() {

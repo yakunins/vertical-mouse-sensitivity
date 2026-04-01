@@ -14,7 +14,7 @@
 #include lib/MouseProcessing.ahk     ; low-level mouse hook callback and cursor state
 
 class VerticalSens {
-    static Version := "0.91"
+    static Version := "0.92"
 
     __New(cfg?) {
         defaultCfg := {
@@ -92,7 +92,7 @@ class VerticalSens {
             inputLabel: "Y multiplier (0.1 – 20):",
             btnTest: "Test (Enter)",
             btnApply: "Apply and Save",
-            btnCancel: "Cancel"
+            btnCancel: "Cancel (Esc)"
         }
 
         this.tray := TrayMenu(this, trayLabels)

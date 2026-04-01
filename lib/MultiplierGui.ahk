@@ -41,6 +41,7 @@ class MultiplierGui {
             activeVal := Number(edit.Value),
             this.app.cfg.yMultiplier := activeVal,
             this.UpdateMenu(),
+            this.tray.UpdateTooltip(),
             btnTest.Enabled := false,
             btnApply.Enabled := activeVal != originalVal
         ))
@@ -48,6 +49,7 @@ class MultiplierGui {
         btnApply.OnEvent("Click", (*) => (
             this.app.cfg.yMultiplier := Number(edit.Value),
             this.UpdateMenu(),
+            this.tray.UpdateTooltip(),
             this.Save(Number(edit.Value)),
             g.Destroy()
         ))
@@ -55,10 +57,12 @@ class MultiplierGui {
         cancelAction := (*) => (
             this.app.cfg.yMultiplier := originalVal,
             this.UpdateMenu(),
+            this.tray.UpdateTooltip(),
             g.Destroy()
         )
         btnCancel.OnEvent("Click", cancelAction)
         g.OnEvent("Close", cancelAction)
+        g.OnEvent("Escape", cancelAction)
 
         g.Show()
     }
