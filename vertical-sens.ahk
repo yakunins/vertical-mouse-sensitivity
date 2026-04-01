@@ -14,7 +14,7 @@
 #include lib/MouseProcessing.ahk     ; low-level mouse hook callback and cursor state
 
 class VerticalSens {
-    static Version := "0.9"
+    static Version := "0.91"
 
     __New(cfg?) {
         defaultCfg := {
@@ -76,9 +76,27 @@ class VerticalSens {
         this.BuildExclusionList()
 
         this.log := FileDebugLog(this.cfg.debug, A_ScriptDir "\debug.log", this.cfg.debugLogMaxLines, this.cfg.debugLogSampleRate)
-        this.mouseProc := MouseProcessing(this)
-        this.tray := TrayMenu(this)
-        this.mult := MultiplierGui(this, this.tray)
+        this.mouseProcessing := MouseProcessing(this)
+
+        trayLabels := {
+            exit: "Exit",
+            hotkeyDisplay: "Win+Alt+V",
+            tooltipPrefix: "Vertical Mouse Sensitivity v",
+            turnOff: "Turn Off",
+            turnOn: "Turn On"
+        }
+        guiLabels := {
+            menuPrefix: "Y Multiplier: ",
+            menuSuffix: "x",
+            windowTitle: "Vertical Mouse Sensitivity",
+            inputLabel: "Y multiplier (0.1 – 20):",
+            btnTest: "Test (Enter)",
+            btnApply: "Apply and Save",
+            btnCancel: "Cancel"
+        }
+
+        this.tray := TrayMenu(this, trayLabels)
+        this.mult := MultiplierGui(this, this.tray, guiLabels)
         this.rawInput := RawMouseInput(ObjBindMethod(this, "OnMouseDelta"))
     }
 
@@ -99,12 +117,12 @@ class VerticalSens {
         this.log.Add("App started | priority=High | multiplier=" this.cfg.yMultiplier " rawToScreen=" Round(this.rawToScreen, 4) " debug=" this.cfg.debug)
         this.tray.Setup()
         this.BindHotkey()
-        this.mouseProc.SyncCursorPos()
+        this.mouseProcessing.SyncCursorPos()
 
         this.rawInput.Register()
         this.log.Add("Raw input registered")
 
-        this.hook := MouseHookInstall(ObjBindMethod(this.mouseProc, "LowLevelMouseProc"))
+        this.hook := MouseHookInstall(ObjBindMethod(this.mouseProcessing, "LowLevelMouseProc"))
         this.log.Add("Mouse hook installed")
 
         this.StartForegroundTracker()
@@ -138,7 +156,7 @@ class VerticalSens {
     Toggle(*) {
         this.enabled := !this.enabled
         if this.enabled
-            this.mouseProc.SyncCursorPos()
+            this.mouseProcessing.SyncCursorPos()
         this.tray.UpdateIcon()
         this.tray.UpdateToggle()
         this.tray.UpdateTooltip()
@@ -174,7 +192,7 @@ class VerticalSens {
             if wasActive && !this.active {
                 this.log.Add("Foreground | " exe " (excluded, adjustment paused)")
             } else if !wasActive && this.active {
-                this.mouseProc.SyncCursorPos()
+                this.mouseProcessing.SyncCursorPos()
                 this.log.Add("Foreground | " exe " (adjustment resumed)")
             } else {
                 this.log.Add("Foreground | " exe)

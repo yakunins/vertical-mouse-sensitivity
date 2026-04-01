@@ -1,8 +1,9 @@
 #Requires AutoHotkey v2.0
 
 class TrayMenu {
-    __New(app) {
+    __New(app, labels) {
         this.app := app
+        this.labels := labels
         this.lastToggleLabel := ""
         this.lastMultLabel := ""
         this.menuOpen := false
@@ -19,7 +20,7 @@ class TrayMenu {
         this.lastMultLabel := this.app.mult.MenuLabel()
         tray.Add(this.lastMultLabel, ObjBindMethod(this.app.mult, "Show"))
         tray.Add()
-        tray.Add("Exit", (*) => ExitApp())
+        tray.Add(this.labels.exit, (*) => ExitApp())
         this.UpdateIcon()
 
         trayMenu := this
@@ -34,20 +35,20 @@ class TrayMenu {
         ShowTrayMenu() {
             A_TrayMenu.Show()  ; Blocks until menu closes
             trayMenu.menuOpen := false
-            trayMenu.app.mouseProc.SyncCursorPos()
+            trayMenu.app.mouseProcessing.SyncCursorPos()
         }
     }
 
     HotkeyDisplay() {
-        return "Win+Alt+V"
+        return this.labels.hotkeyDisplay
     }
 
     UpdateTooltip() {
-        A_IconTip := "Vertical Sensitivity v" . VerticalSens.Version
+        A_IconTip := this.labels.tooltipPrefix . VerticalSens.Version
     }
 
     ToggleMenuLabel() {
-        action := this.app.enabled ? "Turn Off" : "Turn On"
+        action := this.app.enabled ? this.labels.turnOff : this.labels.turnOn
         return action "`t" this.HotkeyDisplay()
     }
 

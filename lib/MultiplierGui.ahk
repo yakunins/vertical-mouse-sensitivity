@@ -1,13 +1,14 @@
 #Requires AutoHotkey v2.0
 
 class MultiplierGui {
-    __New(app, tray) {
+    __New(app, tray, labels) {
         this.app := app
         this.tray := tray
+        this.labels := labels
     }
 
     MenuLabel() {
-        return "Y Multiplier: " Round(this.app.cfg.yMultiplier, 2) "x"
+        return this.labels.menuPrefix Round(this.app.cfg.yMultiplier, 2) this.labels.menuSuffix
     }
 
     UpdateMenu() {
@@ -21,13 +22,13 @@ class MultiplierGui {
         originalVal := this.app.cfg.yMultiplier
         activeVal := originalVal
 
-        g := Gui("+AlwaysOnTop", "Y Multiplier")
+        g := Gui("+AlwaysOnTop", this.labels.windowTitle)
         g.SetFont("s10")
-        g.Add("Text", , "Y multiplier (0.1 – 20):")
+        g.Add("Text", , this.labels.inputLabel)
         edit := g.Add("Edit", "w280 vMultVal", Round(originalVal, 2))
-        btnTest := g.Add("Button", "w280 Disabled Default", "Test (Enter)")
-        btnApply := g.Add("Button", "w280 Disabled", "Apply and save to config.json")
-        btnCancel := g.Add("Button", "w280", "Cancel")
+        btnTest := g.Add("Button", "w280 Disabled Default", this.labels.btnTest)
+        btnApply := g.Add("Button", "w280 Disabled", this.labels.btnApply)
+        btnCancel := g.Add("Button", "w280", this.labels.btnCancel)
 
         validateInput := (*) => this.Validate(edit.Value)
 
