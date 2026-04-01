@@ -10,7 +10,7 @@
 #include lib/MouseHook.ahk
 
 class VerticalSens {
-    static Version := "0.7"
+    static Version := "0.8"
 
     __New(cfg?) {
         defaultCfg := {
@@ -51,10 +51,10 @@ class VerticalSens {
                 "Diablo IV.exe",
                 "Stardew Valley.exe"
             ],
-            yMultiplier: 1.35,
+            yMultiplier: 1.40,
             toggleShortcut: "#!v",
             trayIcon: "vertical",
-            disableOnDrag: true,
+            disableOnDrag: false,
             debug: false,
             debugLogMaxLines: 128,
             debugLogSampleRate: 10

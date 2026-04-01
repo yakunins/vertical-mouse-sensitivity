@@ -4,7 +4,7 @@
     "disableInGames": false,
     "toggleShortcut": "#!v",
     "trayIcon": "vertical",
-    "disableOnDrag": true,
+    "disableOnDrag": false,
     "debug": false,
     "logMaxLines": 128,
     "logSampleRate": 10,
