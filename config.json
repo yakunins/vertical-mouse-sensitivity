@@ -5,6 +5,7 @@
     "toggleShortcut": "#!v",
     "trayIcon": "vertical",
     "disableOnDrag": false,
+    "foregroundCheckInterval": 200,
     "debug": false,
     "logMaxLines": 128,
     "logSampleRate": 10,

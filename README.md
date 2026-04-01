@@ -5,7 +5,7 @@
 Adjust vertical (Y-axis) mouse sensitivity independently from horizontal movement on Windows.
 
 When enabled, vertical movement is scaled by `yMultiplier`, while horizontal movement remains unchanged.
-Uses raw input (`WM_INPUT`) for sub-pixel precision at slow speeds.
+Uses raw input (`WM_INPUT`) for sub-pixel precision at slow speeds — fractional remainders accumulate across ticks, so multipliers like `1.4` produce smooth movement. Integer multipliers (e.g. `5`) will move exactly that many pixels per raw tick, since screen coordinates are integers.
 
 Built with [AutoHotkey v2](https://www.autohotkey.com/v2/). Executable compiled with [Ahk2Exe](https://github.com/AutoHotkey/Ahk2Exe).
 
@@ -38,6 +38,7 @@ Edit `config.json` and restart the app, or change Y Multiplier via tray menu.
 | `disableForExe`  | `[]`    | List of executable names to disable adjustment for (e.g. ["photoshop.exe"]) |
 | `disableInGames` | `false` | Automatically disable for common games (CS2, Valorant, Fortnite, etc.). Most games have their own vertical sensitivity settings. |
 | `disableOnDrag`  | `false`  | Disable adjustment while any mouse button is held (helps prevent issues in programs like Adobe Photoshop) |
+| `foregroundCheckInterval` | `200` | How often to check the active window for exclusion list matching (ms) |
 
 ## License
 MIT
