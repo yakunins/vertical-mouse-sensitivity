@@ -31,8 +31,8 @@ Edit `config.json` and restart the app, or change Y Multiplier via tray menu.
 
 | Setting          | Default | Description                                                     |
 | ---------------- | ------- | --------------------------------------------------------------- |
-| `yMultiplier`    | `1.40`  | Vertical sensitivity multiplier (e.g., `2` = 2x vertical speed) |
-| `toggleShortcut` | `"#!v"` | AHK hotkey to toggle on/off (`#!v` = Win+Alt+V)                 |
+| `yMultiplier`    | `1.40`  | Vertical sensitivity multiplier (e.g. `2` = 2x vertical speed) |
+| `toggleShortcut` | `"#!v"` | [AHK hotkey notation](https://www.autohotkey.com/docs/v2/Hotkeys.htm) to toggle on/off (`#!v` = Win+Alt+V)                 |
 | `disableForExe`  | `[]`    | List of executable names to disable adjustment for (e.g. ["photoshop.exe"]) |
 | `disableInGames` | `false` | Automatically disable for common games (CS2, Valorant, Fortnite, etc.). Most games have their own vertical sensitivity settings. |
 | `disableOnDrag`  | `false`  | Disable adjustment while any mouse button is held (helps prevent issues in programs like Adobe Photoshop) |
