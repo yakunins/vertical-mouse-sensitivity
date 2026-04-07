@@ -75,6 +75,12 @@ class MouseProcessing {
             ; Injected by another app — sync our tracked position
             this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
             this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
+        } else if (nCode >= 0 && wParam = 0x0200) {
+            ; Not scaling (disabled/excluded/menu open) — keep tracker in sync
+            ; so there's no jump when scaling resumes
+            this.curX := NumGet(lParam + 0, 0, "Int") + 0.0
+            this.curY := NumGet(lParam + 0, 4, "Int") + 0.0
+            this.accumY := 0.0
         }
 
         return MouseHookCallNext(nCode, wParam, lParam)

@@ -20,9 +20,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Set project root (parent of tools/)
+set "ProjectDir=%~dp0.."
+
 :: Read version from vertical-sens.ahk
 set "VERSION="
-for /f "tokens=4 delims= " %%a in ('findstr /c:"static Version" vertical-sens.ahk') do (
+for /f "tokens=4 delims= " %%a in ('findstr /c:"static Version" "%ProjectDir%\vertical-sens.ahk"') do (
     set "VERSION=%%~a"
 )
 :: Remove trailing quote if present
@@ -48,8 +51,8 @@ if not errorlevel 1 (
 )
 
 :: Verify all release files exist
-for /f "usebackq delims=" %%f in ("release-files.txt") do (
-    if not exist "%%f" (
+for /f "usebackq delims=" %%f in ("%ProjectDir%\tools\release-files.txt") do (
+    if not exist "%ProjectDir%\%%f" (
         echo ERROR: Missing file: %%f
         exit /b 1
     )
@@ -58,7 +61,7 @@ for /f "usebackq delims=" %%f in ("release-files.txt") do (
 :: Create zip from release-files.txt
 if exist "%ZIP%" del "%ZIP%"
 echo Creating %ZIP%...
-powershell -NoProfile -Command "Compress-Archive -Path (Get-Content 'release-files.txt' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) -DestinationPath '%ZIP%'"
+powershell -NoProfile -Command "Compress-Archive -Path (Get-Content '%ProjectDir%\tools\release-files.txt' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } | ForEach-Object { '%ProjectDir%\' + $_ }) -DestinationPath '%ZIP%'"
 if errorlevel 1 (
     echo ERROR: Failed to create zip
     exit /b 1

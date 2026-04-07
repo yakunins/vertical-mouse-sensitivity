@@ -5,12 +5,12 @@ echo === VerticalSens - Compile ===
 echo.
 
 :: Set paths
-set "ScriptDir=%~dp0"
-set "SourceFile=%ScriptDir%vertical-sens.ahk"
-set "OutputFile=%ScriptDir%vertical-sens.exe"
+set "ProjectDir=%~dp0.."
+set "SourceFile=%ProjectDir%\vertical-sens.ahk"
+set "OutputFile=%ProjectDir%\vertical-sens.exe"
 set "Compiler=C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe"
 set "BaseFile=C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
-set "IconFile=%ScriptDir%images\app-icon-vertical-sens-2.ico"
+set "IconFile=%ProjectDir%\images\app-icon-vertical-sens-2.ico"
 
 :: Check if compiler exists
 if not exist "%Compiler%" (
