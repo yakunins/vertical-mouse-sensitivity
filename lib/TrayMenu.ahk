@@ -34,8 +34,10 @@ class TrayMenu {
         }
         ShowTrayMenu() {
             A_TrayMenu.Show()  ; Blocks until menu closes
-            trayMenu.menuOpen := false
+            ; Sync BEFORE clearing menuOpen — otherwise the LL hook can fire
+            ; in the race window and scale against a stale curY (jump bug).
             trayMenu.app.mouseProcessing.SyncCursorPos()
+            trayMenu.menuOpen := false
         }
     }
 

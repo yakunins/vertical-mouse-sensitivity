@@ -14,7 +14,7 @@
 #include lib/MouseProcessing.ahk     ; low-level mouse hook callback and cursor state
 
 class VerticalSens {
-    static Version := "0.93"
+    static Version := "0.94"
 
     __New(cfg?) {
         defaultCfg := {
@@ -154,9 +154,11 @@ class VerticalSens {
     }
 
     Toggle(*) {
-        this.enabled := !this.enabled
-        if this.enabled
+        ; Sync BEFORE flipping the flag on the off→on transition — otherwise
+        ; the LL hook can fire in the race window and scale against a stale curY.
+        if !this.enabled
             this.mouseProcessing.SyncCursorPos()
+        this.enabled := !this.enabled
         this.tray.UpdateIcon()
         this.tray.UpdateToggle()
         this.tray.UpdateTooltip()
@@ -187,14 +189,19 @@ class VerticalSens {
         if (exe != this.lastExe) {
             this.lastExe := exe
             wasActive := this.active
-            this.active := !this.IsExcludedExe(exe)
+            newActive := !this.IsExcludedExe(exe)
 
-            if wasActive && !this.active {
+            if wasActive && !newActive {
+                this.active := newActive
                 this.log.Add("Foreground | " exe " (excluded, adjustment paused)")
-            } else if !wasActive && this.active {
+            } else if !wasActive && newActive {
+                ; Sync BEFORE flipping the flag — otherwise the LL hook can fire
+                ; in the race window and scale against a stale curY (jump bug).
                 this.mouseProcessing.SyncCursorPos()
+                this.active := newActive
                 this.log.Add("Foreground | " exe " (adjustment resumed)")
             } else {
+                this.active := newActive
                 this.log.Add("Foreground | " exe)
             }
         }
