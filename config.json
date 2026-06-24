@@ -7,8 +7,8 @@
     "disableOnDrag": false,
     "foregroundCheckInterval": 200,
     "debug": false,
-    "logMaxLines": 128,
-    "logSampleRate": 10,
+    "debugLogMaxLines": 20000,
+    "debugLogSampleRate": 10,
     "gameExeList": [
         "cs2.exe", "csgo.exe",
         "dota2.exe",

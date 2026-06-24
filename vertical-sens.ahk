@@ -1,6 +1,31 @@
 #requires AutoHotkey v2.0
 #singleinstance force
 
+; Replace the base AutoHotkey manifest with a Per-Monitor-V2 one at compile time.
+; The OS reads this before AHK starts, making the process default PMv2 — the only
+; awareness level that reaches the WH_MOUSE_LL hook callback, where Windows runs
+; under the PROCESS default (SetProcess/ThreadDpiAwarenessContext can't change it
+; from script). The .manifest extension makes Ahk2Exe use resource type 24
+; (RT_MANIFEST); name 1 is the process manifest, replacing AHK's default.
+;@Ahk2Exe-AddResource vertical-sens.manifest, 1
+
+; Per-Monitor-V2 DPI awareness. Without it a resolution/scaling change
+; virtualizes some pointer APIs but not others: A_ScreenHeight and GetCursorPos
+; report DPI-scaled coordinates (e.g. 1620 on a 2160 panel) while the
+; WH_MOUSE_LL hook keeps physical pixels. That coordinate-space mismatch makes
+; every Y delta bogus and drifts the cursor to the top of the screen.
+;
+; SetProcessDpiAwarenessContext is refused once the process window exists (AHK
+; locks it during its own startup, before this line runs), so we set awareness
+; at the THREAD level instead — that is not locked and is honored live. AHK is
+; single-OS-threaded, so this one call covers the hook callback, the timers and
+; every GetCursorPos / SetCursorPos / A_ScreenHeight read. It must run before
+; the hook is installed so the LL-hook pt is delivered in physical pixels.
+try {
+    if !DllCall("User32\SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")  ; PER_MONITOR_AWARE_V2 (Win10 1703+)
+        DllCall("User32\SetThreadDpiAwarenessContext", "Ptr", -3, "Ptr")  ; PER_MONITOR_AWARE (1607+ fallback)
+}
+
 #include lib/Jsons.ahk
 #include lib/MergeObjects.ahk
 
@@ -70,6 +95,7 @@ class VerticalSens {
         this.enabled := true
         this.active := true
         this.hook := 0
+        this.settleUntil := 0   ; A_TickCount until which scaling is suspended after a display change
 
         this.lastExe := ""
         this.rawToScreen := GetMouseSpeedFactor()
@@ -126,7 +152,30 @@ class VerticalSens {
         this.log.Add("Mouse hook installed")
 
         this.StartForegroundTracker()
+
+        ; Resolution/display changes invalidate the tracked cursor position and
+        ; can momentarily report bogus virtual-screen metrics. Re-sync so scaling
+        ; restarts from the real cursor instead of fighting it into a corner.
+        OnMessage(0x007E, ObjBindMethod(this, "OnDisplayChange"))  ; WM_DISPLAYCHANGE
+
         OnExit(ObjBindMethod(this, "OnAppExit"))
+    }
+
+    OnDisplayChange(wParam, lParam, msg, hwnd) {
+        ; A resolution/scaling switch is not instantaneous — for up to ~1.5s the
+        ; coordinate space keeps shifting, surfacing as a cascade of large bogus
+        ; deltas. Suspend scaling for that window so native movement passes through
+        ; untouched, then re-sync from the settled, real cursor position.
+        this.settleUntil := A_TickCount + 1500
+        this.mouseProcessing.SyncCursorPos()
+        this.log.Add("Display changed | scaling suspended " (this.settleUntil - A_TickCount) "ms | screenH=" A_ScreenHeight)
+        SetTimer(ObjBindMethod(this, "EndSettle"), -1500)
+    }
+
+    EndSettle() {
+        this.settleUntil := 0
+        this.mouseProcessing.SyncCursorPos()
+        this.log.Add("Settle ended | cursor re-synced | screenH=" A_ScreenHeight)
     }
 
     BindHotkey() {
