@@ -39,7 +39,7 @@ try {
 #include lib/MouseProcessing.ahk     ; low-level mouse hook callback and cursor state
 
 class VerticalSens {
-    static Version := "0.94"
+    static Version := "0.95"
 
     __New(cfg?) {
         defaultCfg := {
